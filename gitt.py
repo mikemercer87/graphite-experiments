@@ -5,6 +5,10 @@ import numpy as np
 import os
 from preformation_plot import Plotter
 
+'''
+Script that handles postprocessing and plotting of all GITT files.
+'''
+
 class Gitt(Plotter):
     def __init__(self):
         Plotter.__init__(self) # Inherit variables from Plotter.

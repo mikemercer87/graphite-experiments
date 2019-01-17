@@ -39,7 +39,7 @@ class Plotter():
             os.makedirs('plot_output/' + directory, exist_ok = True)
         self.max_cap = 372 # Sets theoretical capacity of graphite.
         
-    def mpl_formatting(self,fontsize = 16, linewidth = 2, markersize = 10, plot_type = 'SOC'):
+    def mpl_formatting(self,fontsize = 16, linewidth = 2, markersize = 6, plot_type = 'SOC'):
         # All the options for customising the appearance of the generated plots.
         plt.style.use('fivethirtyeight')
         font = {'weight' : 'normal',
@@ -69,7 +69,12 @@ class Plotter():
             plt.xlabel('SOC')
             plt.ylabel('OCV (V) vs. Li')
             plt.xlim([0.0,1.0])
-            plt.ylim([0.0,0.6])    
+            plt.ylim([0.0,0.6])
+        elif plot_type == 'Dis_entropy' or plot_type == 'Ch_entropy':
+            plt.xlabel('OCV (V) vs. Li')
+            plt.ylabel('DeltaS (J mol-1 K-1)')
+            plt.xlim([0.0,0.6])
+            plt.ylim([-15.0,20.0])
 
         plt.tight_layout()
         
