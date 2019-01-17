@@ -77,21 +77,6 @@ class Plotter():
             plt.ylim([-15.0,20.0])
 
         plt.tight_layout()
-        
-    def cubic_smoother(self,df_x,df_y,n_points):
-        # Returns two smoothed and interpolated grids, x and the variable. Npoints is the number of points to smooth over.
-        df_xred=df_x[df_x.notnull()].as_matrix()
-        df_yred=df_y[df_y.notnull()].as_matrix()
-        data_points=zip(df_xred,df_yred)
-        data_points=sorted(data_points, key=lambda point: point[0])
-        data_T = zip(*data_points)
-        print('data_points', data_points[:][0])
-#    print df_xred[-10:-1]
-#    print df_yred[-10:-1]
-        new_x=np.linspace(data_T[0][0],data_T[0][-1],n_points)
-        print(new_x)
-        smooth= interp1d(data_T[0],data_T[1],kind='cubic')(new_x)
-        return(new_x,smooth)
 
 #    def dQdV(self):
         # Handles differentiation to get dQ/dV.
@@ -115,17 +100,26 @@ class Plotter():
         cell_ID = string.split('_')[instance] # Extract second element from the list.
         return(cell_ID)
 
-    def extract_dataframe(self,filename,header=True,data_type='Preform'):
-        if header == True:
-            # File contains the Basytec header information.
-            no_skipped = 13
+    def extract_dataframe(self,filename,header=True,data_type='Preform',skiprows = None):
+        if skiprows is None:
+            if header == True:
+                # File contains the Basytec header information.
+                no_skipped = 13
+            else:
+                no_skipped = 0
         else:
-            no_skipped = 0
+            no_skipped = skiprows
+
+        print('no_skipped=', no_skipped)    
+        print('**********Datatype=', data_type, '******************')    
             
         if data_type == 'Preform':    
             self.preform_df = pd.read_csv(filename,skiprows = no_skipped,encoding = "ISO-8859-1")
         elif data_type == 'GITT':
             self.gitt_df = pd.read_csv(filename,skiprows = no_skipped,encoding = "ISO-8859-1")
+
+        elif data_type == 'Dis_entropy' or data_type == 'Ch_entropy':
+            self.entropy_df = pd.read_csv(filename,skiprows = no_skipped,encoding = "ISO-8859-1")
             
     def basytec_split(self, df, no_cycles = 2, show = False, csvs = True, plots = True):
         # Handles all the cycle splits. Charge and discharge combined.
@@ -174,6 +168,9 @@ class Plotter():
         self.df_dis['SOC'] = (self.df_dis['Capacity'] - cap_min_dis) / self.max_cap
         self.df_ch['SOC'] = (self.df_ch['Capacity'] - cap_min_ch) / self.max_cap
 
+        self.df_splits['%dD' % n] = self.df_dis
+        self.df_splits['%dC' % n] = self.df_ch
+        
         if plots:
             plt.plot(self.df_dis['SOC'],self.df_dis['U[V]'],label='Discharge no %d' % n)
             self.mpl_formatting(plot_type = 'SOC')
