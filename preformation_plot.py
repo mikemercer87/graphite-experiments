@@ -17,7 +17,8 @@ import os
 class Plotter():
     # Handles plotting for galvan. Plus paths for all experimental data.
     def __init__(self):
-        # Get out all files and put into a meaningful directory.'
+        # Get out all files and put into a meaningful directory.'     
+     
         self.master_dir = '00_20micron/00_Electrochem_25degrees/'
         self.preform_dir = self.master_dir + '00_Preformation_C_10/'
         self.galvan_dir = self.master_dir + '01_Galvan_C_50/'
@@ -48,34 +49,58 @@ class Plotter():
         lines = {'linewidth': linewidth,
                  'markersize': markersize}
         
+        self.fig1 = plt.figure(1)
+        self.fig2 = plt.figure(2)
+        self.fig3 = plt.figure(3)
+        self.fig4 = plt.figure(4)
+        self.ax1 = self.fig1.add_subplot(111)
+        self.ax2 = self.fig2.add_subplot(111)
+        self.ax3 = self.fig3.add_subplot(111)
+        self.ax4 = self.fig4.add_subplot(111)                
+        self.fig_labels = [self.fig1, self.fig2, self.fig3, self.fig4]
+        self.ax_labels = [self.ax1, self.ax2, self.ax3, self.ax4]   
+        
         mpl.rc('font', **font)
         mpl.rc('lines', **lines)
-        if plot_type == 'transient':
-            plt.xlabel('Time (h)')
-            plt.ylabel('Voltage (V) vs. Li')
-            plt.xlim()
-            plt.ylim()
-        elif plot_type == 'SOC':
-            plt.xlabel('SOC')
-            plt.ylabel('Voltage (V) vs. Li')
-            plt.xlim([0.0,1.0])
-            plt.ylim([0.0,0.6])
-        elif plot_type == 'capacity':
-            plt.xlabel('Capacity (mAh/g)')
-            plt.ylabel('Voltage')
-            plt.xlim()
-            plt.ylim()
-        elif plot_type == 'GITT':
-            plt.xlabel('SOC')
-            plt.ylabel('OCV (V) vs. Li')
-            plt.xlim([0.0,1.0])
-            plt.ylim([0.0,0.6])
-        elif plot_type == 'Dis_entropy' or plot_type == 'Ch_entropy':
-            plt.xlabel('OCV (V) vs. Li')
-            plt.ylabel('DeltaS (J mol-1 K-1)')
-            plt.xlim([0.0,0.6])
-            plt.ylim([-15.0,20.0])
+        for fig_label, ax_label in zip(self.fig_labels, self.ax_labels):
+            if plot_type == 'transient':
+                plt.xlabel('Time (h)')
+                plt.ylabel('Voltage (V) vs. Li')
+                plt.xlim(auto=True)
+                plt.ylim(auto=True)
+            elif plot_type == 'SOC':
+                plt.xlabel('SOC')
+                plt.ylabel('Voltage (V) vs. Li')
+                plt.xlim([0.0,1.0])
+                plt.ylim([0.0,0.6])
+            elif plot_type == 'capacity':
+                plt.xlabel('Capacity (mAh/g)')
+                plt.ylabel('Voltage')
+                plt.xlim(auto=True)
+                plt.ylim(auto=True)
+            elif plot_type == 'GITT':
+                plt.xlabel('SOC')
+                plt.ylabel('OCV (V) vs. Li')
+                plt.xlim([0.0,1.0])
+                plt.ylim([0.0,0.6])
+            elif plot_type == 'Dis_entropy' or plot_type == 'Ch_entropy':
+                plt.xlabel('OCV (V) vs. Li')
+                plt.ylabel('DeltaS (J mol-1 K-1)')
+                plt.xlim([0.0,0.6])
+                plt.ylim([-15.0,20.0])
+            elif plot_type == 'dQdV':
+                if ax_label == self.ax1 or ax_label == self.ax2:
+                    ax_label.set_xlabel('SOC')
+                    ax_label.set_ylabel('log(dQ/dV)')
+                    ax_label.set_xlim(auto=True)
+                    ax_label.set_ylim(auto=True)
+                elif ax_label == self.ax3 or ax_label == self.ax4:
+                    ax_label.set_xlabel('Voltage (V) vs. Li')
+                    ax_label.set_ylabel('log(dQ/dV)')
+                    ax_label.set_xlim([0.0,0.3])
+                    ax_label.set_ylim(auto=True)                    
 
+            
         plt.tight_layout()
 
 #    def dQdV(self):
@@ -156,6 +181,12 @@ class Plotter():
                 
             self.basytec_second_split(df = self.df_split, n = self.n, show = self.show, csvs = self.csvs, plots = self.plots)
             self.n += 1
+            
+    def get_ir_drop(self):
+        self.mean_dis = self.df_dis[(self.df_dis['SOC'] > 0.6) & (self.df_dis['SOC'] < 0.7)]
+        self.mean_ch = self.df_ch[(self.df_ch['SOC'] > 0.6) & (self.df_ch['SOC'] < 0.7)]
+        self.ir = (self.mean_ch['U[V]'].mean() - self.mean_dis['U[V]'].mean()) / 2
+        print('iR_correction =', self.ir)
 
     def basytec_second_split(self, df, n, show = False, csvs = True, plots = True):
         # Uses a split dataframe (1st cycle, 2nd cycle) as input, splits again into separate charge and discharge cycles.
@@ -223,7 +254,6 @@ class Plotter():
                 plt.legend()
                 if plots:
                     plt.savefig('plot_output/' + filename.replace('.txt','') + '.png')
-                
                 if show:
                     plt.show()
 
